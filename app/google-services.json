@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "631738013747",
+    "project_id": "my-space-8b69e",
+    "storage_bucket": "my-space-8b69e.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:631738013747:android:8f0b8c6cf55d5b684a2b46",
+        "android_client_info": {
+          "package_name": "com.sanjay.myspace"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAywVYfA_megQ8cKFlDBn27n9R0W6fczbg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,0 +1,36 @@
+<resources>
+    <string name="app_name">MySpace</string>
+    <string name="title_activity_main">MainActivity</string>
+    <string name="clear">Clear</string>
+    <string name="username">Username</string>
+    <string name="password">Password</string>
+    <string name="hide_password">Hide Password</string>
+    <string name="show_password">Show Password</string>
+    <string name="login">Login</string>
+    <string name="sign_up">Sign Up</string>
+    <string name="back">Back</string>
+    <string name="mySpace">My Space</string>
+    <string name="spaceName">Space Name</string>
+    <string name="create">Create</string>
+    <string name="folderName">Folder Name</string>
+    <string name="new_folder">New Folder</string>
+    <string name="new_file">New File</string>
+    <string name="file_name">File Name</string>
+    <string name="title">Title</string>
+    <string name="description">Description</string>
+    <string name="update">Update</string>
+    <string name="logout">Logout</string>
+    <string name="search">Search</string>
+    <string name="files">Files</string>
+    <string name="folders">Folders</string>
+    <string name="cancel">Cancel</string>
+    <string name="ok">OK</string>
+    <string name="yes">Yes</string>
+    <string name="logout_msg">Are you sure you want to logout?</string>
+    <string name="share">Share</string>
+    <string name="created_at">Created At</string>
+    <string name="updated_at">Updated At</string>
+    <string name="email">Email</string>
+    <string name="folder">Folder</string>
+    <string name="file">File</string>
+</resources>
