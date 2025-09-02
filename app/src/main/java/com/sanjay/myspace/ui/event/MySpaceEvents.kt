@@ -9,6 +9,7 @@ sealed class MySpaceEvents {
     data object OnCreateClicked : MySpaceEvents()
     data object OnDeleteClicked : MySpaceEvents()
     data object OnLogoutClicked : MySpaceEvents()
+    data object DetailsBack : MySpaceEvents()
 
     data class HandleSearchVisibility(
         val show: Boolean,

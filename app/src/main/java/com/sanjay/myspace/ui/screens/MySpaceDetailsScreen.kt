@@ -9,9 +9,7 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -23,10 +21,6 @@ import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentSize
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Sort
@@ -38,7 +32,6 @@ import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.FloatingActionButtonDefaults
@@ -46,7 +39,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -55,11 +47,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -70,17 +60,15 @@ import com.sanjay.myspace.ui.component.CountView
 import com.sanjay.myspace.ui.component.CustomText
 import com.sanjay.myspace.ui.component.FileCreationView
 import com.sanjay.myspace.ui.component.FolderCreationView
-import com.sanjay.myspace.ui.component.ListGridToggle
 import com.sanjay.myspace.ui.component.ProgressDialog
 import com.sanjay.myspace.ui.component.SearchView
 import com.sanjay.myspace.ui.component.SelectionWOClear
+import com.sanjay.myspace.ui.component.SpaceDetailsUI
 import com.sanjay.myspace.ui.component.Text14
 import com.sanjay.myspace.ui.component.TopBarComp
 import com.sanjay.myspace.ui.event.SpaceDetailsEvents
 import com.sanjay.myspace.ui.state.SpaceDetailsState
-import com.sanjay.myspace.ui.theme.Gray
 import com.sanjay.myspace.ui.theme.Green
-import com.sanjay.myspace.ui.theme.LightBg
 import com.sanjay.myspace.ui.theme.PrimaryClr
 import com.sanjay.myspace.ui.theme.SecondaryClr
 import com.sanjay.myspace.ui.theme.TextDark
@@ -279,188 +267,207 @@ fun MySpaceDetailsScreen(
             }
         }
     ) { innerPadding ->
-        Surface(
+        SpaceDetailsUI(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding),
-            color = LightBg
-        ) {
-            if (!state.isInit && state.folders.isEmpty() && state.files.isEmpty()) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                ) {
-                    CustomText(
-                        text = "No file or folder has found",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier
-                            .align(Alignment.Center)
-                    )
-                }
-                onEvent(SpaceDetailsEvents.HandleListType(null))
-                return@Surface
-            }
-
-            if (state.folders.isNotEmpty() || state.files.isNotEmpty()) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .padding(horizontal = 15.dp, vertical = 10.dp)
-                                .wrapContentSize()
-                                .height(40.dp)
-                                .background(
-                                    color = Color.Gray
-                                        .copy(alpha = 0.1f),
-                                    shape = RoundedCornerShape(10.dp)
-                                )
-                        ) {
-                            IconButton(
-                                onClick = {
-                                    onEvent(SpaceDetailsEvents.HandleListType(if (state.showFolders == true) null else true))
-                                }
-                            ) {
-                                Icon(
-                                    painter = painterResource(R.drawable.ic_folder),
-                                    tint = if (state.showFolders == true) PrimaryClr else Gray,
-                                    contentDescription = stringResource(R.string.folders)
-                                )
-                            }
-
-                            IconButton(
-                                onClick = {
-                                    onEvent(SpaceDetailsEvents.HandleListType(if (state.showFolders == false) null else false))
-                                }
-                            ) {
-                                Icon(
-                                    modifier = Modifier
-                                        .rotate(270f),
-                                    painter = painterResource(R.drawable.ic_file),
-                                    tint = if (state.showFolders == false) PrimaryClr else Gray,
-                                    contentDescription = stringResource(R.string.files)
-                                )
-                            }
-                        }
-
-                        ListGridToggle(
-                            modifier = Modifier
-                                .wrapContentSize(),
-                            isListView = state.isListView,
-                            isFavList = state.isFavList,
-                            showFav = state.showFolders != true,
-                            onFavClick = {
-                                onEvent(SpaceDetailsEvents.HandleFav(it))
-                            },
-                            onClick = {
-                                onEvent(SpaceDetailsEvents.OnViewToggleClicked(it))
-                            }
-                        )
-                    }
-
-                    LazyVerticalGrid(
-                        columns = GridCells.Fixed(
-                            when {
-                                state.isListView -> 1
-                                !state.isListView && isMobilePortrait -> 2
-                                else -> 3
-                            }
-                        ),
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .weight(1f),
-                        contentPadding = PaddingValues(horizontal = 15.dp, vertical = 8.dp),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        if (!state.isFavList && state.showFolders != false) {
-                            itemsIndexed(if (state.showSearchView) state.folderSearchResults else state.folders) { index, folderItem ->
-                                if (index >= state.folders.size - 1 && !state.showSearchView && !state.isFolderEndReached && !state.isPageRefreshing) {
-                                    onEvent(SpaceDetailsEvents.CallPaginationAPI)
-                                }
-                                SpaceDetailItemView(
-                                    folderItem = folderItem,
-                                    fileItem = null,
-                                    isFolder = true,
-                                    onItemClicked = {
-                                        onEvent(SpaceDetailsEvents.OnItemClicked(folderId = it))
-                                    },
-                                    onItemLongClicked = {
-                                        onEvent(
-                                            SpaceDetailsEvents.OnItemClicked(
-                                                folderId = it,
-                                                isLongClicked = true
-                                            )
-                                        )
-                                    }
-                                )
-                            }
-                        }
-
-                        if (state.isFavList || state.showFolders != true) {
-                            itemsIndexed(if (state.showSearchView) state.fileSearchResults else state.files) { index, fileItem ->
-                                if (index >= state.files.size - 1 && !state.showSearchView && !state.isFileEndReached && !state.isPageRefreshing) {
-                                    onEvent(SpaceDetailsEvents.CallPaginationAPI)
-                                }
-                                SpaceDetailItemView(
-                                    folderItem = null,
-                                    fileItem = fileItem,
-                                    isFolder = false,
-                                    onItemClicked = {
-                                        onEvent(SpaceDetailsEvents.OnItemClicked(fileId = it))
-                                    },
-                                    onItemLongClicked = {
-                                        onEvent(
-                                            SpaceDetailsEvents.OnItemClicked(
-                                                fileId = it,
-                                                isLongClicked = true
-                                            )
-                                        )
-                                    },
-                                    onFavClicked = {
-                                        onEvent(
-                                            SpaceDetailsEvents.OnFavoriteClicked(it)
-                                        )
-                                    }
-                                )
-                            }
-                        }
-
-                        if (state.isPageRefreshing) {
-                            item {
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(8.dp),
-                                    horizontalArrangement = Arrangement.Center
-                                ) {
-                                    CircularProgressIndicator()
-                                }
-                            }
-                        }
-
-                        if (state.isFolderEndReached && state.isFileEndReached) {
-                            item {
-                                Spacer(modifier = Modifier.height(70.dp))
-                            }
-                        }
-                    }
-                }
-            }
-        }
+            isInit = state.isInit,
+            folders = state.folders,
+            files = state.files,
+            showFolders = state.showFolders,
+            isListView = state.isListView,
+            isMobilePortrait = isMobilePortrait,
+            isFavList = state.isFavList,
+            folderSearchResults = state.folderSearchResults,
+            fileSearchResults = state.fileSearchResults,
+            showSearchView = state.showSearchView,
+            isFolderEndReached = state.isFolderEndReached,
+            isFileEndReached = state.isFileEndReached,
+            isPageRefreshing = state.isPageRefreshing,
+            onEvent = onEvent,
+        )
+//        Surface(
+//            modifier = Modifier
+//                .fillMaxSize()
+//                .padding(innerPadding),
+//            color = LightBg
+//        ) {
+//            if (!state.isInit && state.folders.isEmpty() && state.files.isEmpty()) {
+//                Box(
+//                    modifier = Modifier
+//                        .fillMaxSize()
+//                ) {
+//                    CustomText(
+//                        text = "No file or folder has found",
+//                        fontSize = 16.sp,
+//                        fontWeight = FontWeight.SemiBold,
+//                        modifier = Modifier
+//                            .align(Alignment.Center)
+//                    )
+//                }
+//                onEvent(SpaceDetailsEvents.HandleListType(null))
+//                return@Surface
+//            }
+//
+//            if (state.folders.isNotEmpty() || state.files.isNotEmpty()) {
+//                Column(
+//                    modifier = Modifier
+//                        .fillMaxSize()
+//                ) {
+//                    Row(
+//                        modifier = Modifier
+//                            .fillMaxWidth(),
+//                        verticalAlignment = Alignment.CenterVertically,
+//                        horizontalArrangement = Arrangement.SpaceBetween
+//                    ) {
+//                        Row(
+//                            modifier = Modifier
+//                                .padding(horizontal = 15.dp, vertical = 10.dp)
+//                                .wrapContentSize()
+//                                .height(40.dp)
+//                                .background(
+//                                    color = Color.Gray
+//                                        .copy(alpha = 0.1f),
+//                                    shape = RoundedCornerShape(10.dp)
+//                                )
+//                        ) {
+//                            IconButton(
+//                                onClick = {
+//                                    onEvent(SpaceDetailsEvents.HandleListType(if (state.showFolders == true) null else true))
+//                                }
+//                            ) {
+//                                Icon(
+//                                    painter = painterResource(R.drawable.ic_folder),
+//                                    tint = if (state.showFolders == true) PrimaryClr else Gray,
+//                                    contentDescription = stringResource(R.string.folders)
+//                                )
+//                            }
+//
+//                            IconButton(
+//                                onClick = {
+//                                    onEvent(SpaceDetailsEvents.HandleListType(if (state.showFolders == false) null else false))
+//                                }
+//                            ) {
+//                                Icon(
+//                                    modifier = Modifier
+//                                        .rotate(270f),
+//                                    painter = painterResource(R.drawable.ic_file),
+//                                    tint = if (state.showFolders == false) PrimaryClr else Gray,
+//                                    contentDescription = stringResource(R.string.files)
+//                                )
+//                            }
+//                        }
+//
+//                        ListGridToggle(
+//                            modifier = Modifier
+//                                .wrapContentSize(),
+//                            isListView = state.isListView,
+//                            isFavList = state.isFavList,
+//                            showFav = state.showFolders != true,
+//                            onFavClick = {
+//                                onEvent(SpaceDetailsEvents.HandleFav(it))
+//                            },
+//                            onClick = {
+//                                onEvent(SpaceDetailsEvents.OnViewToggleClicked(it))
+//                            }
+//                        )
+//                    }
+//
+//                    LazyVerticalGrid(
+//                        columns = GridCells.Fixed(
+//                            when {
+//                                state.isListView -> 1
+//                                !state.isListView && isMobilePortrait -> 2
+//                                else -> 3
+//                            }
+//                        ),
+//                        modifier = Modifier
+//                            .fillMaxSize()
+//                            .weight(1f),
+//                        contentPadding = PaddingValues(horizontal = 15.dp, vertical = 8.dp),
+//                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+//                        verticalArrangement = Arrangement.spacedBy(8.dp)
+//                    ) {
+//                        if (!state.isFavList && state.showFolders != false) {
+//                            itemsIndexed(if (state.showSearchView) state.folderSearchResults else state.folders) { index, folderItem ->
+//                                if (index >= state.folders.size - 1 && !state.showSearchView && !state.isFolderEndReached && !state.isPageRefreshing) {
+//                                    onEvent(SpaceDetailsEvents.CallPaginationAPI)
+//                                }
+//                                SpaceDetailItemView(
+//                                    folderItem = folderItem,
+//                                    fileItem = null,
+//                                    isFolder = true,
+//                                    onItemClicked = {
+//                                        onEvent(SpaceDetailsEvents.OnItemClicked(folderId = it))
+//                                    },
+//                                    onItemLongClicked = {
+//                                        onEvent(
+//                                            SpaceDetailsEvents.OnItemClicked(
+//                                                folderId = it,
+//                                                isLongClicked = true
+//                                            )
+//                                        )
+//                                    }
+//                                )
+//                            }
+//                        }
+//
+//                        if (state.isFavList || state.showFolders != true) {
+//                            itemsIndexed(if (state.showSearchView) state.fileSearchResults else state.files) { index, fileItem ->
+//                                if (index >= state.files.size - 1 && !state.showSearchView && !state.isFileEndReached && !state.isPageRefreshing) {
+//                                    onEvent(SpaceDetailsEvents.CallPaginationAPI)
+//                                }
+//                                SpaceDetailItemView(
+//                                    folderItem = null,
+//                                    fileItem = fileItem,
+//                                    isFolder = false,
+//                                    onItemClicked = {
+//                                        onEvent(SpaceDetailsEvents.OnItemClicked(fileId = it))
+//                                    },
+//                                    onItemLongClicked = {
+//                                        onEvent(
+//                                            SpaceDetailsEvents.OnItemClicked(
+//                                                fileId = it,
+//                                                isLongClicked = true
+//                                            )
+//                                        )
+//                                    },
+//                                    onFavClicked = {
+//                                        onEvent(
+//                                            SpaceDetailsEvents.OnFavoriteClicked(it)
+//                                        )
+//                                    }
+//                                )
+//                            }
+//                        }
+//
+//                        if (state.isPageRefreshing) {
+//                            item {
+//                                Row(
+//                                    modifier = Modifier
+//                                        .fillMaxWidth()
+//                                        .padding(8.dp),
+//                                    horizontalArrangement = Arrangement.Center
+//                                ) {
+//                                    CircularProgressIndicator()
+//                                }
+//                            }
+//                        }
+//
+//                        if (state.isFolderEndReached && state.isFileEndReached) {
+//                            item {
+//                                Spacer(modifier = Modifier.height(70.dp))
+//                            }
+//                        }
+//                    }
+//                }
+//            }
+//        }
     }
 }
 
 @Composable
-private fun SpaceDetailItemView(
+fun SpaceDetailItemView(
     folderItem: SpaceFolder?,
     fileItem: SpaceFile?,
     isFolder: Boolean,

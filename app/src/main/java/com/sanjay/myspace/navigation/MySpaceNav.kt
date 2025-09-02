@@ -122,16 +122,7 @@ fun MySpaceNav(
                         }
 
                         is MySpaceEvents.OnItemClicked -> {
-                            if (event.isLongClicked || viewModel.state.mySpaces.any { it.isSelected }) {
-                                viewModel.eventHandler(event.copy(isLongClicked = true))
-                            } else {
-                                viewModel.eventHandler(event)
-                                navHostController.navigate(
-                                    SpaceDetails(
-                                        parentId = event.id,
-                                    )
-                                )
-                            }
+                            viewModel.eventHandler(event.copy(isLongClicked = event.isLongClicked || viewModel.state.mySpaces.any { it.isSelected }))
                         }
 
                         is MySpaceEvents.OnCreateClicked -> {
@@ -145,6 +136,36 @@ fun MySpaceNav(
 
                         else -> {
                             viewModel.eventHandler(event)
+                        }
+                    }
+                },
+                onDetailsEvent = { event ->
+                    when (event) {
+                        is SpaceDetailsEvents.OnItemClicked -> {
+                            if (event.isLongClicked || viewModel.state.folders.any { it.isSelected } ||
+                                viewModel.state.files.any { it.isSelected }
+                            ) {
+                                viewModel.onDetailedEvent(event.copy(isLongClicked = true))
+                            } else {
+                                if (event.folderId != null) {
+                                    viewModel.onDetailedEvent(
+                                        SpaceDetailsEvents.OnInit(
+                                            parentId = event.folderId,
+                                            isUpdate = true
+                                        )
+                                    )
+                                } else if (event.fileId != null) {
+                                    navHostController.navigate(
+                                        CardDetails(
+                                            fileId = event.fileId,
+                                        )
+                                    )
+                                }
+                            }
+                        }
+
+                        else -> {
+                            viewModel.onDetailedEvent(event)
                         }
                     }
                 }

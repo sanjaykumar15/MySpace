@@ -1,5 +1,5 @@
 [versions]
-agp = "8.12.1"
+agp = "8.12.2"
 kotlin = "2.2.10"
 coreKtx = "1.17.0"
 junit = "4.13.2"
@@ -14,7 +14,7 @@ hilt-version = "2.57.1"
 realm = "10.19.0"
 lifecycleRuntimeKtx = "2.9.3"
 adaptive-version = "1.1.0"
-firebase-bom = "34.1.0"
+firebase-bom = "34.2.0"
 google-services = "4.4.3"
 datastore = "1.1.7"
 

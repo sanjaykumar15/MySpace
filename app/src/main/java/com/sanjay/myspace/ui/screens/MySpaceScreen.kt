@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -68,12 +69,14 @@ import com.sanjay.myspace.ui.component.ListGridToggle
 import com.sanjay.myspace.ui.component.ProgressDialog
 import com.sanjay.myspace.ui.component.SearchView
 import com.sanjay.myspace.ui.component.SelectionWOClear
+import com.sanjay.myspace.ui.component.SpaceDetailsUI
 import com.sanjay.myspace.ui.component.Text12
 import com.sanjay.myspace.ui.component.Text14
 import com.sanjay.myspace.ui.component.TextFieldWithLabel
 import com.sanjay.myspace.ui.component.ThemeButton
 import com.sanjay.myspace.ui.component.TopBarComp
 import com.sanjay.myspace.ui.event.MySpaceEvents
+import com.sanjay.myspace.ui.event.SpaceDetailsEvents
 import com.sanjay.myspace.ui.state.MySpaceState
 import com.sanjay.myspace.ui.theme.Green
 import com.sanjay.myspace.ui.theme.LightBg
@@ -88,6 +91,7 @@ import com.sanjay.myspace.utils.DeviceConfiguration
 fun MySpaceScreen(
     state: MySpaceState,
     onEvent: (MySpaceEvents) -> Unit,
+    onDetailsEvent: (SpaceDetailsEvents) -> Unit,
 ) {
     if (state.isInit || state.isLoading) {
         ProgressDialog(state.loadingMsg ?: "Fetching data...")
@@ -168,6 +172,8 @@ fun MySpaceScreen(
             onEvent(MySpaceEvents.HandleSearchVisibility(false))
         } else if (state.mySpaces.any { it.isSelected }) {
             onEvent(MySpaceEvents.ClearSelection)
+        } else if (state.selectedParentID != null) {
+            onEvent(MySpaceEvents.DetailsBack)
         } else {
             onEvent(MySpaceEvents.OnBackClicked)
         }
@@ -262,147 +268,179 @@ fun MySpaceScreen(
             }
         }
     ) { innerPadding ->
-        Surface(
+        Row(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding),
-            color = LightBg
+                .padding(innerPadding)
         ) {
-            if (!state.isInit && state.mySpaces.isEmpty()) {
-                Box(
+            if (!(state.selectedParentID != null && isMobilePortrait)) {
+                Surface(
                     modifier = Modifier
-                        .fillMaxSize()
-                ) {
-                    CustomText(
-                        text = "No Space has created",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier
-                            .align(Alignment.Center)
-                    )
-                }
-                return@Surface
-            }
-
-            if (state.mySpaces.isNotEmpty() || state.searchResults.isNotEmpty()) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth(),
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        if (!state.showSearchView) {
-                            Row(
-                                modifier = Modifier
-                                    .padding(horizontal = 15.dp, vertical = 10.dp)
-                                    .wrapContentSize()
-                                    .height(40.dp)
-                                    .background(
-                                        color = Color.Gray
-                                            .copy(alpha = 0.1f),
-                                        shape = RoundedCornerShape(10.dp)
-                                    )
-                                    .clickable {
-                                        onEvent(MySpaceEvents.HandleSortByView(true))
-                                    },
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                            ) {
-                                Icon(
-                                    modifier = Modifier
-                                        .size(32.dp)
-                                        .padding(start = 10.dp),
-                                    imageVector = Icons.AutoMirrored.Filled.Sort,
-                                    contentDescription = null
-                                )
-
-                                Text12(
-                                    text = state.sortByLabel,
-                                    modifier = Modifier
-                                        .padding(end = 10.dp)
-                                )
-                            }
-                        } else {
-                            Box { }
-                        }
-
-                        ListGridToggle(
-                            modifier = Modifier
-                                .wrapContentSize(),
-                            isListView = state.isListView,
-                            showFav = true,
-                            isFavList = state.isFavList,
-                            onFavClick = {
-                                onEvent(MySpaceEvents.HandleFav(it))
-                            },
-                            onClick = {
-                                onEvent(MySpaceEvents.OnViewToggleClicked(it))
-                            }
-                        )
-                    }
-
-                    LazyVerticalGrid(
-                        columns = GridCells.Fixed(
-                            when {
-                                state.isListView -> 1
-                                isMobilePortrait -> 2
-                                else -> 3
-                            }
+                        .fillMaxHeight()
+                        .fillMaxWidth(
+                            if (isMobilePortrait) {
+                                1f
+                            } else 0.5f
                         ),
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .weight(1f),
-                        contentPadding = PaddingValues(horizontal = 15.dp, vertical = 8.dp),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        itemsIndexed(if (state.showSearchView) state.searchResults else state.mySpaces) { index, spaceItem ->
-                            if (index >= state.mySpaces.size - 1 && !state.showSearchView && !state.endReached && !state.isPageRefreshing) {
-                                onEvent(MySpaceEvents.CallPaginationAPI)
-                            }
-                            MySpaceItemView(
-                                item = spaceItem,
-                                onItemClicked = {
-                                    onEvent(MySpaceEvents.OnItemClicked(it))
-                                },
-                                onItemLongClicked = {
-                                    onEvent(
-                                        MySpaceEvents.OnItemClicked(
-                                            id = it,
-                                            isLongClicked = true
-                                        )
-                                    )
-                                },
-                                onFavClicked = {
-                                    onEvent(MySpaceEvents.OnFavClicked(it))
-                                }
+                    color = LightBg
+                ) {
+                    if (!state.isInit && state.mySpaces.isEmpty()) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                        ) {
+                            CustomText(
+                                text = "No Space has created",
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                modifier = Modifier
+                                    .align(Alignment.Center)
                             )
                         }
+                        return@Surface
+                    }
 
-                        if (state.isPageRefreshing) {
-                            item {
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(8.dp),
-                                    horizontalArrangement = Arrangement.Center
-                                ) {
-                                    CircularProgressIndicator()
+                    if (state.mySpaces.isNotEmpty() || state.searchResults.isNotEmpty()) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth(),
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                if (!state.showSearchView) {
+                                    Row(
+                                        modifier = Modifier
+                                            .padding(horizontal = 15.dp, vertical = 10.dp)
+                                            .wrapContentSize()
+                                            .height(40.dp)
+                                            .background(
+                                                color = Color.Gray
+                                                    .copy(alpha = 0.1f),
+                                                shape = RoundedCornerShape(10.dp)
+                                            )
+                                            .clickable {
+                                                onEvent(MySpaceEvents.HandleSortByView(true))
+                                            },
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                    ) {
+                                        Icon(
+                                            modifier = Modifier
+                                                .size(32.dp)
+                                                .padding(start = 10.dp),
+                                            imageVector = Icons.AutoMirrored.Filled.Sort,
+                                            contentDescription = null
+                                        )
+
+                                        Text12(
+                                            text = state.sortByLabel,
+                                            modifier = Modifier
+                                                .padding(end = 10.dp)
+                                        )
+                                    }
+                                } else {
+                                    Box { }
                                 }
-                            }
-                        }
 
-                        if (state.endReached) {
-                            item {
-                                Spacer(modifier = Modifier.height(70.dp))
+                                ListGridToggle(
+                                    modifier = Modifier
+                                        .wrapContentSize(),
+                                    isListView = state.isListView,
+                                    showFav = true,
+                                    isFavList = state.isFavList,
+                                    onFavClick = {
+                                        onEvent(MySpaceEvents.HandleFav(it))
+                                    },
+                                    onClick = {
+                                        onEvent(MySpaceEvents.OnViewToggleClicked(it))
+                                    }
+                                )
+                            }
+
+                            LazyVerticalGrid(
+                                columns = GridCells.Fixed(
+                                    when {
+                                        state.isListView -> 1
+                                        isMobilePortrait -> 2
+                                        else -> 3
+                                    }
+                                ),
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .weight(1f),
+                                contentPadding = PaddingValues(horizontal = 15.dp, vertical = 8.dp),
+                                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                itemsIndexed(if (state.showSearchView) state.searchResults else state.mySpaces) { index, spaceItem ->
+                                    if (index >= state.mySpaces.size - 1 && !state.showSearchView && !state.endReached && !state.isPageRefreshing) {
+                                        onEvent(MySpaceEvents.CallPaginationAPI)
+                                    }
+                                    MySpaceItemView(
+                                        item = spaceItem,
+                                        onItemClicked = {
+                                            onEvent(MySpaceEvents.OnItemClicked(it))
+                                        },
+                                        onItemLongClicked = {
+                                            onEvent(
+                                                MySpaceEvents.OnItemClicked(
+                                                    id = it,
+                                                    isLongClicked = true
+                                                )
+                                            )
+                                        },
+                                        onFavClicked = {
+                                            onEvent(MySpaceEvents.OnFavClicked(it))
+                                        }
+                                    )
+                                }
+
+                                if (state.isPageRefreshing) {
+                                    item {
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(8.dp),
+                                            horizontalArrangement = Arrangement.Center
+                                        ) {
+                                            CircularProgressIndicator()
+                                        }
+                                    }
+                                }
+
+                                if (state.endReached) {
+                                    item {
+                                        Spacer(modifier = Modifier.height(70.dp))
+                                    }
+                                }
                             }
                         }
                     }
                 }
+            }
+            if (state.selectedParentID != null) {
+                SpaceDetailsUI(
+                    modifier = Modifier
+                        .fillMaxSize(),
+                    isInit = false,
+                    folders = state.folders,
+                    files = state.files,
+                    showFolders = state.showFolders,
+                    isListView = state.isDetailsListView,
+                    isMobilePortrait = false,
+                    isFavList = state.isFavList,
+                    folderSearchResults = state.folderSearchResults,
+                    fileSearchResults = state.fileSearchResults,
+                    showSearchView = state.showSearchView,
+                    isFolderEndReached = state.isFolderEndReached,
+                    isFileEndReached = state.isFileEndReached,
+                    isPageRefreshing = state.isDetailsPageRefreshing,
+                    onEvent = onDetailsEvent
+                )
             }
         }
     }
@@ -511,7 +549,8 @@ private fun MySpaceScreenPreview() {
     MySpaceTheme {
         MySpaceScreen(
             state = MySpaceState(),
-            onEvent = {}
+            onEvent = {},
+            onDetailsEvent = {}
         )
     }
 }

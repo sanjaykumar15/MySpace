@@ -12,6 +12,7 @@ import com.sanjay.myspace.helper.RealmHelper
 import com.sanjay.myspace.model.SortEnum
 import com.sanjay.myspace.paginator.PaginatorImpl
 import com.sanjay.myspace.ui.event.MySpaceEvents
+import com.sanjay.myspace.ui.event.SpaceDetailsEvents
 import com.sanjay.myspace.ui.state.MySpaceState
 import com.sanjay.myspace.utils.ModelUtil.sortSpaces
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -100,6 +101,12 @@ class MySpaceVM @Inject constructor(
                 getSpaces()
             }
 
+            MySpaceEvents.DetailsBack -> {
+                state = state.copy(
+                    selectedParentID = null
+                )
+            }
+
             is MySpaceEvents.OnViewToggleClicked -> {
                 state = state.copy(
                     isListView = event.isListView
@@ -154,6 +161,9 @@ class MySpaceVM @Inject constructor(
                             }
                         }
                     )
+                }
+                if (!event.isPortrait) {
+                    updateSpaceDetailsData(event.id)
                 }
             }
 
@@ -235,6 +245,130 @@ class MySpaceVM @Inject constructor(
                     isFavList = event.isFavList
                 )
                 getSpaces()
+            }
+
+            else -> {}
+        }
+    }
+
+    fun onDetailedEvent(event: SpaceDetailsEvents) {
+        when (event) {
+            is SpaceDetailsEvents.OnItemClicked -> {
+                if (event.isLongClicked) {
+                    state = state.copy(
+                        folders = state.folders.map {
+                            if (it.id == event.folderId) {
+                                it.copy(isSelected = !it.isSelected)
+                            } else {
+                                it
+                            }
+                        },
+                        files = state.files.map {
+                            if (it.id == event.fileId) {
+                                it.copy(isSelected = !it.isSelected)
+                            } else {
+                                it
+                            }
+                        },
+                    )
+                }
+            }
+
+            SpaceDetailsEvents.ClearSelection -> {
+                state = state.copy(
+                    folders = state.folders.map {
+                        it.copy(isSelected = false)
+                    },
+                    files = state.files.map {
+                        it.copy(isSelected = false)
+                    },
+                )
+            }
+
+            is SpaceDetailsEvents.OnViewToggleClicked -> {
+                state = state.copy(
+                    isListView = event.isListView
+                )
+                updateListViewPref(event.isListView)
+            }
+
+            is SpaceDetailsEvents.HandleListType -> {
+                state = state.copy(
+                    showFolders = event.showFolders,
+                    isFavList = if (event.showFolders == true) false
+                    else state.isFavList
+                )
+                refreshFileData()
+            }
+
+            is SpaceDetailsEvents.HandleSearchVisibility -> {
+                state = state.copy(
+                    showSearchView = event.show,
+                    searchQuery = "",
+                    folderSearchResults = if (event.show) state.folders else emptyList(),
+                    fileSearchResults = if (event.show) state.files else emptyList()
+                )
+            }
+
+            is SpaceDetailsEvents.OnSearchQuery -> {
+                state = state.copy(
+                    searchQuery = event.query
+                )
+                if (event.query.isNotEmpty()) {
+                    val folderSearchRes = state.folders.filter {
+                        it.name.contains(event.query, true)
+                    }
+                    val fileSearchRes = state.files.filter {
+                        it.title.contains(event.query, true)
+                    }
+                    if (state.isFileEndReached) {
+                        state = state.copy(
+                            folderSearchResults = folderSearchRes,
+                            fileSearchResults = fileSearchRes
+                        )
+                    } else if (folderSearchRes.isNotEmpty() || fileSearchRes.isNotEmpty()) {
+                        state = state.copy(
+                            folderSearchResults = folderSearchRes,
+                            fileSearchResults = fileSearchRes
+                        )
+                    } else {
+                        search(event.query)
+                    }
+                } else {
+                    state = state.copy(
+                        folderSearchResults = if (state.showSearchView) state.folders else emptyList(),
+                        fileSearchResults = if (state.showSearchView) state.files else emptyList()
+                    )
+                }
+            }
+
+            SpaceDetailsEvents.CallPaginationAPI -> {
+                viewModelScope.launch(Dispatchers.Main) {
+                    pagination.loadNextItems()
+                }
+            }
+
+            is SpaceDetailsEvents.OnFavoriteClicked -> {
+                realmHelper.updateFav(
+                    id = event.id,
+                    isFile = true
+                )
+                state = state.copy(
+                    files = state.files.map {
+                        if (it.id == event.id) {
+                            it.copy(isFavorite = !it.isFavorite)
+                        } else {
+                            it
+                        }
+                    }
+                )
+            }
+
+            is SpaceDetailsEvents.HandleFav -> {
+                state = state.copy(
+                    isFavList = event.isFavList
+                )
+                refreshFileData()
             }
 
             else -> {}
@@ -347,6 +481,66 @@ class MySpaceVM @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             dataStoreHelper.saveString(DataStoreKey.SPACE_SORT_PREF, sortBy)
         }
+    }
+
+    private fun updateSpaceDetailsData(parentId: Int?) {
+        viewModelScope.launch(Dispatchers.Main) {
+            val sortBy = dataStoreHelper.getString(
+                DataStoreKey.SPACE_DETAILS_SORT_PREF,
+                SortEnum.UPDATED_AT_DES.name
+            )
+            val folders = realmHelper.getFolderData(
+                parentId = parentId,
+                isSpaceParent = true,
+                sortBy = sortBy,
+                page = state.folderPage,
+                limit = pageLimit
+            )
+            val files = realmHelper.getFiles(
+                parentId = parentId,
+                isSpaceParent = true,
+                sortBy = sortBy,
+                page = state.filePage,
+                limit = pageLimit
+            )
+            state = state.copy(
+                selectedParentID = parentId,
+                isListView = dataStoreHelper.getBoolean(DataStoreKey.SPACE_DETAILS_LIST_PREF, true),
+                sortByList = state.sortByList.map {
+                    it.copy(isSelected = it.value == sortBy)
+                },
+                folderPage = state.folderPage + 1,
+                folders = folders,
+                isFolderEndReached = folders.size < pageLimit,
+                filePage = state.filePage + 1,
+                files = files,
+                isFileEndReached = files.size < pageLimit
+            )
+            realmHelper.updateSpaceViewCount(parentId)
+        }
+    }
+
+    private fun refreshFileData() {
+        state = state.copy(
+            filePage = 1,
+            isFileEndReached = false
+        )
+        val files = realmHelper.getFiles(
+            parentId = state.selectedParentID,
+            isSpaceParent = true,
+            sortBy = state.sortByLabel,
+            page = state.filePage,
+            limit = pageLimit,
+            isFavList = state.isFavList,
+        )
+        state = state.copy(
+            files = files,
+            filePage = state.filePage + 1,
+            isFileEndReached = files.size < pageLimit,
+            fileSearchResults = if (state.showSearchView) files.filter {
+                it.title.contains(state.searchQuery, true)
+            } else emptyList()
+        )
     }
 
 }
